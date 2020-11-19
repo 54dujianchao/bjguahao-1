@@ -16,6 +16,16 @@ class Browser(object):
         self.session.headers = {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36',
             'Content-Type': 'application/json; charset=UTF-8',
+            'Accept': 'application/json, text/plain, */*',
+            'Accept-Encoding': 'gzip,deflate,br',
+            'Accept-Language': 'zh-CN, zh;q = 0.9',
+            'Connection': 'keep-alive',
+            'Host': 'www.114yygh.com',
+            'Referer': 'https://www.114yygh.com/',
+            'Request-Source': 'PC',
+            'Sec-Fetch-Dest': 'empty',
+            'Sec-Fetch-Mode': 'cors',
+            'Sec-Fetch-Site': 'same-origin'
         }
 
     def load_cookies(self, path):

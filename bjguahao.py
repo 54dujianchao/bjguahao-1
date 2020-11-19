@@ -64,6 +64,17 @@ class Config(object):
                 self.date = data["date"]
                 self.hospital_id = data["hospitalId"]
                 self.department_id = data["departmentId"]
+                self.weekDescDict = {
+                    '周五':5,
+                    '周六':6,
+                    '周日':7,
+                    '周一':1,
+                    '周二':2,
+                    '周三':3,
+                    '周四':4,
+                }
+                self.first_dept_code = data["firstDeptCode"]
+                self.second_dept_code = data["secondDeptCode"]
                 self.duty_code = data["dutyCode"]
                 self.patient_name = data["patientName"]
                 self.hospital_card_id = data["hospitalCardId"]
@@ -98,6 +109,8 @@ class Config(object):
                 logging.debug("挂号日期:" + str(self.date))
                 logging.debug("医院id:" + str(self.hospital_id))
                 logging.debug("科室id:" + str(self.department_id))
+                logging.debug("一级id:" + str(self.first_dept_code))
+                logging.debug("二级id:" + str(self.second_dept_code))
                 logging.debug("上午/下午:" + str(self.duty_code))
                 logging.debug("就诊人姓名:" + str(self.patient_name))
                 logging.debug("所选医生:" + str(self.doctorName))
@@ -181,16 +194,18 @@ class Guahao(object):
         self.browser = Browser()
         self.dutys = ""
         self.refresh_time = ''
-        self.verify_url = "http://www.114yygh.com/web/verify"
-        self.login_url = "http://www.114yygh.com/web/login"
-        self.send_code_url = "http://www.114yygh.com/web/getVerifyCode"
-        self.duty_url = "http://www.114yygh.com/web/product/detail"
-        self.confirm_url = "http://www.114yygh.com/web/order/saveOrder"
-        self.patient_id_url = "http://www.114yygh.com/order/confirm/"
-        self.query_hospital_url = "http://www.114yygh.com/web/queryHospitalById"
-        self.calendar = "http://www.114yygh.com/web/product/list"
-        self.order_patient_list = "http://www.114yygh.com/web/patient/orderPatientList"
-        self.appoint_info_url = "http://www.114yygh.com/web/order/getAppointInfo"
+        self.verify_url = "https://www.114yygh.com/web/verify"
+        self.login_url = "https://www.114yygh.com/web/login"
+        self.send_code_url = "https://www.114yygh.com/web/common/verify-code/get"
+        self.duty_url = "https://www.114yygh.com/web/product/detail"
+        self.confirm_url = "https://www.114yygh.com/web/order/saveOrder"
+        self.patient_id_url = "https://www.114yygh.com/order/confirm/"
+        # self.query_hospital_url = "http://www.114yygh.com/web/queryHospitalById"
+        self.query_hospital_url = "https://www.114yygh.com/web/hospital/detail"
+        self.calendar = "https://www.114yygh.com/web/product/list"
+        self.user_info = "https://www.114yygh.com/web/user/info"
+        self.order_patient_list = "https://www.114yygh.com/web/patient/list"
+        self.appoint_info_url = "https://www.114yygh.com/web/order/getAppointInfo"
 
         self.config = Config(config_path)                       # config对象
         if self.config.useIMessage == 'true':
@@ -212,7 +227,7 @@ class Guahao(object):
 
     def is_login(self):
         logging.info("开始检查是否已经登录")
-        response = self.browser.get("http://www.114yygh.com/web/patient/validPatientList"+"?rd="+str(self.timestamp()), data='')
+        response = self.browser.get(self.user_info+"?_time="+str(self.timestamp()), data='')
         try:
             data = json.loads(response.text)
             if data["resCode"] == 0:
@@ -243,7 +258,7 @@ class Guahao(object):
         logging.info("cookies登录失败")
 
         logging.info("开始使用账号密码登录")
-        self.browser.get(self.verify_url+"?mobile="+self.config.mobile_no+"&rd="+str(self.timestamp()),"")
+        self.browser.get(self.verify_url+"?mobile="+self.config.mobile_no+"&_time="+str(self.timestamp()),"")
         sms_code = self.get_sms_verify_code("LOGIN")
         time.sleep(1)
 
@@ -251,9 +266,9 @@ class Guahao(object):
         payload = {
             'loginType': 'SMS_CODE_LOGIN',
             'mobile': aes.encrypt(mobile_no),
-            'password': aes.encrypt(sms_code)
+            'code': aes.encrypt(sms_code)
         }
-        response = self.browser.post(self.login_url, data=payload)
+        response = self.browser.post(self.login_url +"?_time="+str(self.timestamp()), data=payload)
         logging.debug("response data:" + response.text)
         try:
             data = json.loads(response.text)
@@ -273,8 +288,9 @@ class Guahao(object):
             sys.exit(-1)
     def calendar_vec(self):
         param = {
-            "hospitalId": self.config.hospital_id,
-            "departmentId": self.config.department_id,
+            "hosCode": self.config.hospital_id,
+            "firstDeptCode": self.config.first_dept_code,
+            "secondDeptCode": self.config.second_dept_code,
             "week": "1",
             "latitude" : "39.91488908",
             "longitude" : "116.40387397"
@@ -285,7 +301,7 @@ class Guahao(object):
         rt = []
         if data['resCode'] == 0:
             for duty in data['data']['calendars']:
-                if duty['remainAvailableNumberWeb']>=0 and str(duty['dutyWeek']) in self.config.week:
+                if duty['status']== 'AVAILABLE' and self.config.weekDescDict[str(duty['dutyWeek'])] in self.config.week:
                     rt.append(duty['dutyDate'])
         logging.info('该科室可挂'+','.join(rt)+'号')
         self.calendar_vec_param = rt
@@ -308,14 +324,17 @@ class Guahao(object):
         """选择合适的大夫"""
         hospital_id = self.config.hospital_id
         department_id = self.config.department_id
+        first_dept_code = self.config.first_dept_code
+        second_dept_code = self.config.second_dept_code
         duty_code = self.config.duty_code
         # log current date
         logging.debug("当前挂号日期: " + self.config.date)
 
         payload = {
-            'hospitalId': hospital_id,
-            'departmentId': department_id,
-            'dutyDate': duty_date
+            'hosCode': hospital_id,
+            'secondDeptCode': second_dept_code,
+            'firstDeptCode': first_dept_code,
+            'target': duty_date
         }
         response = self.browser.post(self.duty_url, data=payload)
         logging.debug("response data:" + response.text)
@@ -498,22 +517,23 @@ class Guahao(object):
 
     def get_patient_id(self):
         """获取就诊人Id"""
-        response = self.browser.get(self.order_patient_list+"?rd="+str(self.timestamp()), "")
+        response = self.browser.get(self.order_patient_list+"?_time="+str(self.timestamp()), "")
         ret = response.text
         data = json.loads(ret)
+        logging.info("response data:" + ret)
         if data['resCode'] != 0:
             sys.exit("获取患者id失败")
         else:
             #TODO 如果重名,提供输入选择
-            for patient in data['data']:
-                if patient['name'][1:] in self.config.patient_name:
-                    self.config.patient_id = patient['id']
+            for patient in data['data']['list']:
+                if patient['patientName'][1:] in self.config.patient_name:
+                    self.config.patient_id = patient['idCardNo']
                     break
             logging.info("病人ID:" + str(self.config.patient_id))
         return self.config.patient_id
 
     def gen_department_url(self):
-        return self.query_hospital_url + "?hosId="+str(self.config.hospital_id)+"&rd="+str(self.timestamp())
+        return self.query_hospital_url+"?_time="+str(self.timestamp()) + "&hosCode="+str(self.config.hospital_id)
     def timestamp(self):
         return int(round(time.time()*1000))
     def get_duty_time(self):
@@ -524,9 +544,9 @@ class Guahao(object):
         data = json.loads(ret)
         if data['resCode'] == 0:
             # 放号时间
-            refresh_time = data['data']['fhTime']
+            refresh_time = data['data']['openTimeView']
             # 放号日期
-            appoint_day = data['data']['fhPeriod']
+            appoint_day = data['data']['bookingRange']
             today = datetime.date.today()
             # 优先确认最新可挂号日期
             self.stop_date = today + datetime.timedelta(days=int(appoint_day))
@@ -543,9 +563,9 @@ class Guahao(object):
     def get_sms_verify_code(self,type):
         """获取短信验证码"""
         payload = {
+	    "_time":str(self.timestamp()),
         "mobile":self.config.mobile_no,
         "smsKey":type,
-        "rd":str(self.timestamp())
         }
         response = self.browser.get(self.send_code_url+"?"+'&'.join([ str(key)+'='+str(value) for key,value in payload.items() ]) , "")
         data = json.loads(response.text)

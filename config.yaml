@@ -1,17 +1,19 @@
 
 # username: 您的的用户名(一般是手机号码)
-username: "13888888888"
+username: "13521262613"
 
-
+password: "121212"
 # date: 挂号日期,如填写latest自动挂最新一天
-date: "2018-01-01"
+date: "2020-11-23"
 
 
 # hospitalId: 医院id
-hospitalId: "162"
+hospitalId: "105"
 
 # departmentId: 科室id
 departmentId: "200002248"
+firstDeptCode: "af4bda13dc92a078f8cd4d4f273a9f7c"
+secondDeptCode: "200040068"
 
 # 关于如何获取 hospitalId 和 departmentId
 # 1. 打开挂号页面
@@ -21,7 +23,7 @@ departmentId: "200002248"
 
 
 # 需要挂早上的号请填写1  需要挂下午的号请填写2  上下午均可填写0
-dutyCode: "1"
+dutyCode: "0"
 
 # patientName: 患者姓名
 # 若是自己挂号可为空
@@ -79,7 +81,7 @@ chooseBest: "yes"
 
 # DebugLevel: 调试等级
 # 支持的调试等级有 debug/info/warning/error/critical
-DebugLevel: "info"
+DebugLevel: "debug"
 
 #使用ios短信和mac电脑接收验证码
 # 可选项为"true" 或者 "false"
