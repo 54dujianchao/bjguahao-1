@@ -203,7 +203,7 @@ class Guahao(object):
         self.calendar = "https://www.114yygh.com/web/product/list"
         self.user_info = "https://www.114yygh.com/web/user/info"
         self.order_patient_list = "https://www.114yygh.com/web/patient/list"
-        self.appoint_info_url = "https://www.114yygh.com/web/order/getAppointInfo"
+        self.appoint_info_url = "https://www.114yygh.com/web/order/save"
 
         self.config = Config(config_path)  # config对象
         if self.config.useIMessage == 'true':
@@ -413,14 +413,19 @@ class Guahao(object):
         """
         hospital_id = self.config.hospital_id
         department_id = self.config.department_id
+        first_dept_code = self.config.first_dept_code
+        second_dept_code = self.config.second_dept_code
         doctor_id = str(doctor['uniqProductKey'])
         duty_source_id = str(doctor['period'][0]['uniqProductKey'])
 
         payload = {
-            'hospitalId': hospital_id,
-            'departmentId': department_id,
-            'doctorId': doctor_id,
-            'dutySourceId': duty_source_id
+            'hosCode': hospital_id,
+            'firstDeptCode': first_dept_code,
+            'secondDeptCode': second_dept_code,
+            'dutyTime': 'null',
+            'treatmentDay': null,
+            'uniqProductKey': doctor_id,
+            'cardType': 'IDENTITY_CARD',
         }
         print('输出PayLoad', payload)
         response = self.browser.post(self.appoint_info_url, data=payload)
@@ -436,18 +441,22 @@ class Guahao(object):
             logging.error(e)
             sys.exit()
 
-    def get_it(self, doctor, sms_code, total_fee):
+    # def get_it(self, doctor, sms_code, total_fee):
+    def get_it(self, doctor, sms_code):
         """
         挂号
         """
-        duty_source_id = str(doctor['dutySourceId'])
+        duty_source_id = str(doctor['period'][0]['uniqProductKey'])
         hospital_id = self.config.hospital_id
         department_id = self.config.department_id
+        date = self.config.date
+        first_dept_code = self.config.first_dept_code
+        second_dept_code = self.config.second_dept_code
         patient_id = str(self.config.patient_id)
         hospital_card_id = self.config.hospital_card_id
         medicare_card_id = self.config.medicare_card_id
         reimbursement_type = self.config.reimbursement_type
-        doctor_id = str(doctor['doctorId'])
+        doctor_id = str(doctor['uniqProductKey'])
         # 新版可能不区分儿童与成人,需测试
         if self.config.children == 'true':
             cid_type = self.config.cid_type
@@ -457,9 +466,10 @@ class Guahao(object):
             children_birthday = GetInformation(children_idno).get_birthday()
             payload = {
                 'phone': self.config.mobile_no,
-                'dutySourceId': duty_source_id,
-                'hospitalId': hospital_id,
-                'departmentId': department_id,
+                'uniqProductKey': duty_source_id,
+                'hosCode': hospital_id,
+                'firstDeptCode': first_dept_code,
+                'secondDeptCode': second_dept_code,
                 'doctorId': doctor_id,
                 'patientId': patient_id,
                 'hospitalCardId': hospital_card_id,
@@ -477,21 +487,24 @@ class Guahao(object):
             payload = {
                 "hospitalId": hospital_id,
                 "departmentId": department_id,
-                "dutySourceId": duty_source_id,
+                "uniqProductKey": duty_source_id,
                 "doctorId": doctor_id,
                 "patientId": patient_id,
-                "dutyDate": doctor['dutyDate'],
-                "dutyCode": doctor['dutyCode'],
-                "totalFee": total_fee,
+                "treatmentDay": date,
+                "dutyTime": doctor['period'][0]['dutyTime'],
+                "dutyCode": doctor['period'][0]['ncode'],
+                # "totalFee": total_fee,
                 "fcode": "",
                 "period": "",
                 "mapDepartmentId": "",
                 "mapDoctorId": "",
                 "planCode": "",
-                "medicareCardId": medicare_card_id,
+                "cardNo": medicare_card_id,
                 "jytCardId": "",
                 "hospitalCardId": hospital_card_id,
+                "cardType": "IDENTITY_CARD",
                 "mapDutySourceId": "",
+                "orderFrom": "OTHER",
                 "smsCode": sms_code,
                 "mobileNo": self.config.mobile_no,
                 "feeColor": "",
@@ -655,12 +668,13 @@ class Guahao(object):
                 time.sleep(1)
             else:
                 print(doctor)
-                total_fee = self.get_fee(doctor)  # 获取挂号费,需在获取验证码之前
+                # total_fee = self.get_fee(doctor)  # 获取挂号费,需在获取验证码之前
                 sms_code = self.get_sms_verify_code('ORDER_CODE')  # 获取验证码
                 print('sms_code:', sms_code)
                 if sms_code is None:
                     time.sleep(1)
-                result = self.get_it(doctor, sms_code, total_fee)  # 4.挂号
+                # result = self.get_it(doctor, sms_code, total_fee)  # 4.挂号
+                result = self.get_it(doctor, sms_code)  # 4.挂号
                 if result:
                     break  # 挂号成功
 
