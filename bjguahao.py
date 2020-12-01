@@ -196,7 +196,7 @@ class Guahao(object):
         self.login_url = "https://www.114yygh.com/web/login"
         self.send_code_url = "https://www.114yygh.com/web/common/verify-code/get"
         self.duty_url = "https://www.114yygh.com/web/product/detail"
-        self.confirm_url = "https://www.114yygh.com/web/order/saveOrder"
+        self.confirm_url = "https://www.114yygh.com/web/order/save"
         self.patient_id_url = "https://www.114yygh.com/order/confirm/"
         # self.query_hospital_url = "http://www.114yygh.com/web/queryHospitalById"
         self.query_hospital_url = "https://www.114yygh.com/web/hospital/detail"
