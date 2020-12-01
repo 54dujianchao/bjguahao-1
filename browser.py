@@ -55,4 +55,4 @@ class Browser(object):
         if response.status_code == 200:
             self.session.headers['Referer'] = response.url
         return response
-
+        

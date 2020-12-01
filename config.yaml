@@ -1,19 +1,17 @@
-
 # username: 您的的用户名(一般是手机号码)
 username: "16777777777"
 
-password: "121212"
+password: ""
 # date: 挂号日期,如填写latest自动挂最新一天
-date: "2020-11-23"
-
+date: "latest"
 
 # hospitalId: 医院id
-hospitalId: "105"
+hospitalId: "1"
 
 # departmentId: 科室id
-departmentId: "200002248"
-firstDeptCode: "af4bda13dc92a078f8cd4d4f273a9f7c"
-secondDeptCode: "200040068"
+departmentId: "200004003"
+firstDeptCode: "1c87253ca8aa8fc966a2443eeaac0fc1"
+secondDeptCode: "200004003"
 
 # 关于如何获取 hospitalId 和 departmentId
 # 1. 打开挂号页面
@@ -21,13 +19,12 @@ secondDeptCode: "200040068"
 # 3. 其中 162 是 hospitalId
 # 4. 其中 200002248 是 departmentId
 
-
 # 需要挂早上的号请填写1  需要挂下午的号请填写2  上下午均可填写0
 dutyCode: "0"
 
 # patientName: 患者姓名
 # 若是自己挂号可为空
-patientName: "蔡桓公"
+patientName: ""
 
 # 就诊卡号
 hospitalCardId: ""
@@ -44,9 +41,7 @@ reimbursementType: "1"
 # 不填写的话默认选最好的医生
 # 填写后若这个医生没有号，会自动选其余号中最好的医生
 doctorName:
-  - "扁鹊"
-  - "华佗"
-  - "杨永信"
+  - ""
 
 # 指定医生
 # false:默认不指定

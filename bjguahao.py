@@ -42,7 +42,7 @@ class Config(object):
     def __init__(self, config_path):
         try:
             with open(config_path, "r", encoding="utf-8") as yaml_file:
-                data = yaml.load(yaml_file)
+                data = yaml.load(yaml_file, Loader=yaml.FullLoader)
                 debug_level = data["DebugLevel"]
                 if debug_level == "debug":
                     self.debug_level = logging.DEBUG
@@ -65,13 +65,13 @@ class Config(object):
                 self.hospital_id = data["hospitalId"]
                 self.department_id = data["departmentId"]
                 self.weekDescDict = {
-                    '周五':5,
-                    '周六':6,
-                    '周日':7,
-                    '周一':1,
-                    '周二':2,
-                    '周三':3,
-                    '周四':4,
+                    '周五': 5,
+                    '周六': 6,
+                    '周日': 7,
+                    '周一': 1,
+                    '周二': 2,
+                    '周三': 3,
+                    '周四': 4,
                 }
                 self.first_dept_code = data["firstDeptCode"]
                 self.second_dept_code = data["secondDeptCode"]
@@ -114,9 +114,9 @@ class Config(object):
                 logging.debug("上午/下午:" + str(self.duty_code))
                 logging.debug("就诊人姓名:" + str(self.patient_name))
                 logging.debug("所选医生:" + str(self.doctorName))
-                logging.debug("是否挂指定医生:"+str(self.assign))
-                logging.debug("检索每天余票:"+str(self.remaining))
-                logging.debug("检索周:"+str(self.week))
+                logging.debug("是否挂指定医生:" + str(self.assign))
+                logging.debug("检索每天余票:" + str(self.remaining))
+                logging.debug("检索周:" + str(self.week))
                 logging.debug("是否挂儿童号:" + str(self.children))
                 if self.children == "true":
                     logging.debug("患儿姓名:" + str(self.children_name))
@@ -139,7 +139,7 @@ class AES_encrypt():
 
     def __init__(self, key, mode='ecb', iv=''):
 
-        self.key = key#.decode("hex")
+        self.key = key # .decode("hex")
         self.iv = iv
         self.cryptor = None
         if mode == "ecb":
@@ -148,8 +148,6 @@ class AES_encrypt():
             self.cryptor = AES.new(str.encode(self.key), AES.MODE_CBC, self.iv)
         else:
             return "Error Mode"
-
-
 
     def __pad(self, text):
         """填充方式，PKCS7"""
@@ -168,7 +166,7 @@ class AES_encrypt():
         text = self.__pad(text)
         self.ciphertext = self.cryptor.encrypt(str.encode(text))
         word = base64.b64encode(self.ciphertext)
-        word = str(word,encoding="utf-8").replace('/', '_')
+        word = str(word, encoding="utf-8").replace('/', '_')
         word = word.replace('+', '-')
         return word
 
@@ -177,11 +175,11 @@ class AES_encrypt():
         plain_text = self.cryptor.decrypt(base64.b64decode(text))
         return self.__unpad(plain_text)
 
-    def get_byte(self,str_in):
+    def get_byte(self, str_in):
         str_out = ""
 
         for i in range(0, len(str_in), 2):
-            str_out = str_out+"0x%s" % str_in[i:i+2]+","
+            str_out = str_out + "0x%s" % str_in[i:i + 2] + ","
         str_out = str_out[:-1]
         return str_out
 
@@ -207,7 +205,7 @@ class Guahao(object):
         self.order_patient_list = "https://www.114yygh.com/web/patient/list"
         self.appoint_info_url = "https://www.114yygh.com/web/order/getAppointInfo"
 
-        self.config = Config(config_path)                       # config对象
+        self.config = Config(config_path)  # config对象
         if self.config.useIMessage == 'true':
             # 按需导入 imessage.py
             import imessage
@@ -216,7 +214,7 @@ class Guahao(object):
             self.imessage = None
 
         if self.config.useQPython3 == 'true':
-            try: # Android QPython3 验证
+            try:  # Android QPython3 验证
                 # 按需导入 qpython3.py
                 import qpython3
                 self.qpython3 = qpython3.QPython3()
@@ -227,7 +225,7 @@ class Guahao(object):
 
     def is_login(self):
         logging.info("开始检查是否已经登录")
-        response = self.browser.get(self.user_info+"?_time="+str(self.timestamp()), data='')
+        response = self.browser.get(self.user_info + "?_time=" + str(self.timestamp()), data='')
         try:
             data = json.loads(response.text)
             if data["resCode"] == 0:
@@ -253,12 +251,12 @@ class Guahao(object):
                 return True
         except Exception as e:
             pass
-          
+
         aes = AES_encrypt(self.config.web_password, 'ecb', '')
         logging.info("cookies登录失败")
 
         logging.info("开始使用账号密码登录")
-        self.browser.get(self.verify_url+"?mobile="+self.config.mobile_no+"&_time="+str(self.timestamp()),"")
+        self.browser.get(self.verify_url + "?mobile=" + self.config.mobile_no + "&_time=" + str(self.timestamp()), "")
         sms_code = self.get_sms_verify_code("LOGIN")
         time.sleep(1)
 
@@ -268,11 +266,11 @@ class Guahao(object):
             'mobile': aes.encrypt(mobile_no),
             'code': aes.encrypt(sms_code)
         }
-        response = self.browser.post(self.login_url +"?_time="+str(self.timestamp()), data=payload)
+        response = self.browser.post(self.login_url + "?_time=" + str(self.timestamp()), data=payload)
         logging.debug("response data:" + response.text)
         try:
             data = json.loads(response.text)
-            if data['resCode'] == 0:#data["msg"] == "OK" and not data["hasError"] and data["code"] == 200:
+            if data['resCode'] == 0:  # data["msg"] == "OK" and not data["hasError"] and data["code"] == 200:
                 # patch for qpython3
                 cookies_file = os.path.join(os.path.dirname(sys.argv[0]), "." + self.config.mobile_no + ".cookies")
                 self.browser.save_cookies(cookies_file)
@@ -286,41 +284,43 @@ class Guahao(object):
             logging.error(e)
             logging.error("登录失败")
             sys.exit(-1)
+
     def calendar_vec(self):
         param = {
             "hosCode": self.config.hospital_id,
             "firstDeptCode": self.config.first_dept_code,
             "secondDeptCode": self.config.second_dept_code,
             "week": "1",
-            "latitude" : "39.91488908",
-            "longitude" : "116.40387397"
-            }
-        response = self.browser.post(self.calendar,param)
+            "latitude": "39.91488908",
+            "longitude": "116.40387397"
+        }
+        response = self.browser.post(self.calendar, param)
         logging.debug("response data:" + response.text)
         data = json.loads(response.text)
         rt = []
         if data['resCode'] == 0:
             for duty in data['data']['calendars']:
-                if duty['status']== 'AVAILABLE' and self.config.weekDescDict[str(duty['dutyWeek'])] in self.config.week:
+                if duty['status'] == 'AVAILABLE' :
                     rt.append(duty['dutyDate'])
-        logging.info('该科室可挂'+','.join(rt)+'号')
+        logging.info('该科室可挂' + ','.join(rt) + '号')
         self.calendar_vec_param = rt
+
     def select_doctor(self):
         if self.config.remaining == "true":
             for duty_date in self.calendar_vec_param:
-                    logging.info("查询"+duty_date+"号源")
-                    doctor = self.select_doctor_one_day(duty_date)
-                    if doctor == 'NoDuty' or doctor == 'NotReady' :
-                        time.sleep(3)
-                        continue
-                    else:
-                        return doctor
+                logging.info("查询" + duty_date + "号源")
+                doctor = self.select_doctor_one_day(duty_date)
+                if doctor == 'NoDuty' or doctor == 'NotReady':
+                    time.sleep(3)
+                    continue
+                else:
+                    return doctor
             return 'NoDuty'
         else:
             doctor = self.select_doctor_one_day(self.config.date)
             return doctor
- 
-    def select_doctor_one_day(self,duty_date):
+
+    def select_doctor_one_day(self, duty_date):
         """选择合适的大夫"""
         hospital_id = self.config.hospital_id
         department_id = self.config.department_id
@@ -340,26 +340,27 @@ class Guahao(object):
         logging.debug("response data:" + response.text)
         try:
             data = json.loads(response.text)
-            if  data["resCode"] == 0:
-                dutys =[]
-                if self.config.duty_code == '1': #上午
-                    dutys = [1]
-                elif self.config.duty_code == '2': #下午
-                    dutys = [2]
-                else: #全天
-                    dutys = [1,2]
+            if data["resCode"] == 0:
+                dutys = []
+                if self.config.duty_code == '1':  # 上午
+                    dutys = ['MORNING']
+                elif self.config.duty_code == '2':  # 下午
+                    dutys = ['AFTERNOON']
+                else:  # 全天
+                    dutys = ['MORNING', 'AFTERNOON']
                 for duty in dutys:
                     for duty_result in data['data']:
-                        if(duty_result['dutyCode'] == duty):
+                        if (duty_result['dutyCode'] == duty):
                             self.dutys = duty_result['detail']
                             doctor = self.select_doctor_by_vec()
-                            if doctor == 'NoDuty' or doctor == 'NotReady' :
+                            if doctor == 'NoDuty' or doctor == 'NotReady':
                                 continue
                             return doctor
                 return 'NoDuty'
         except Exception as e:
             logging.error(repr(e))
             sys.exit()
+
     def select_doctor_by_vec(self):
         if len(self.dutys) == 0:
             return "NotReady"
@@ -368,24 +369,24 @@ class Guahao(object):
         if self.config.assign == 'true':
             for doctor_conf in self.config.doctorName:
                 for doctor in doctors:
-                    if self.get_doctor_name(doctor) == doctor_conf and (doctor['totalCount']%2!=0):
+                    if self.get_doctor_name(doctor) == doctor_conf and (doctor['totalCount'] % 2 != 0):
                         logging.info("选中:" + self.get_doctor_name(doctor))
                         return doctor
             return "NoDuty"
         # 按照配置优先级选择医生
         for doctor_conf in self.config.doctorName:
             for doctor in doctors:
-                if self.get_doctor_name(doctor) == doctor_conf and doctor['totalCount']%2!=0:
+                if self.get_doctor_name(doctor) == doctor_conf and doctor['totalCount'] % 2 != 0:
                     return doctor
 
         # 若没有合适的医生，默认返回最好的医生
         for doctor in doctors:
-            if doctor['totalCount']%2 != 0:
+            if doctor['totalCount'] % 2 != 0:
                 logging.info("选中:" + self.get_doctor_name(doctor))
                 return doctor
         return "NoDuty"
 
-    def get_doctor_name(self,doctor):
+    def get_doctor_name(self, doctor):
         if doctor['doctorName'] is not None:
             return str(doctor['doctorName'])
         else:
@@ -397,11 +398,12 @@ class Guahao(object):
         x.border = True
         x.field_names = ["医生姓名", "擅长", "号余量"]
         for doctor in self.dutys:
-            x.add_row([self.get_doctor_name(doctor), doctor['doctorSkill'], "无" if doctor['totalCount']%2 == 0 else "有"])
+            x.add_row(
+                [self.get_doctor_name(doctor), doctor['doctorSkill'], "无" if doctor['totalCount'] % 2 == 0 else "有"])
         print(x.get_string())
         pass
 
-    def get_fee(self,doctor):
+    def get_fee(self, doctor):
         """
         获取真实挂号费显示数值
         """
@@ -428,7 +430,7 @@ class Guahao(object):
         except Exception as e:
             logging.error(e)
             sys.exit()
-        
+
     def get_it(self, doctor, sms_code, total_fee):
         """
         挂号
@@ -441,7 +443,7 @@ class Guahao(object):
         medicare_card_id = self.config.medicare_card_id
         reimbursement_type = self.config.reimbursement_type
         doctor_id = str(doctor['doctorId'])
-        #新版可能不区分儿童与成人,需测试
+        # 新版可能不区分儿童与成人,需测试
         if self.config.children == 'true':
             cid_type = self.config.cid_type
             children_name = self.config.children_name
@@ -449,7 +451,7 @@ class Guahao(object):
             children_gender = GetInformation(children_idno).get_sex()
             children_birthday = GetInformation(children_idno).get_birthday()
             payload = {
-                'phone':self.config.mobile_no,
+                'phone': self.config.mobile_no,
                 'dutySourceId': duty_source_id,
                 'hospitalId': hospital_id,
                 'departmentId': department_id,
@@ -476,21 +478,21 @@ class Guahao(object):
                 "dutyDate": doctor['dutyDate'],
                 "dutyCode": doctor['dutyCode'],
                 "totalFee": total_fee,
-                "fcode":"",
-                "period":"",
-                "mapDepartmentId":"",
-                "mapDoctorId":"",
-                "planCode":"",
+                "fcode": "",
+                "period": "",
+                "mapDepartmentId": "",
+                "mapDoctorId": "",
+                "planCode": "",
                 "medicareCardId": medicare_card_id,
-                "jytCardId":"",
+                "jytCardId": "",
                 "hospitalCardId": hospital_card_id,
-                "mapDutySourceId":"",
+                "mapDutySourceId": "",
                 "smsCode": sms_code,
                 "mobileNo": self.config.mobile_no,
-                "feeColor":"",
-                "dutyImgType":""
+                "feeColor": "",
+                "dutyImgType": ""
             }
-        #save order 
+        # save order
         response = self.browser.post(self.confirm_url, data=payload)
         logging.debug("payload:" + json.dumps(payload))
         logging.debug("response data:" + response.text)
@@ -498,13 +500,13 @@ class Guahao(object):
         try:
             data = json.loads(response.text)
             if data["resCode"] == 0:
-                #20181027,成功result：
-                #{"msg":"成功","code":1,"orderId":"97465746","isLineUp":false}
+                # 20181027,成功result：
+                # {"msg":"成功","code":1,"orderId":"97465746","isLineUp":false}
                 logging.info("挂号成功")
                 return True
             if data["resCode"] == 8008:
-                #重复订单，说明挂号成功
-                #{"code":8008,"msg":"科室预约规则检查重复订单","data":null}
+                # 重复订单，说明挂号成功
+                # {"code":8008,"msg":"科室预约规则检查重复订单","data":null}
                 logging.error(data["msg"])
                 return True
             else:
@@ -517,14 +519,14 @@ class Guahao(object):
 
     def get_patient_id(self):
         """获取就诊人Id"""
-        response = self.browser.get(self.order_patient_list+"?_time="+str(self.timestamp()), "")
+        response = self.browser.get(self.order_patient_list + "?_time=" + str(self.timestamp()), "")
         ret = response.text
         data = json.loads(ret)
         logging.info("response data:" + ret)
         if data['resCode'] != 0:
             sys.exit("获取患者id失败")
         else:
-            #TODO 如果重名,提供输入选择
+            # TODO 如果重名,提供输入选择
             for patient in data['data']['list']:
                 if patient['patientName'][1:] in self.config.patient_name:
                     self.config.patient_id = patient['idCardNo']
@@ -533,9 +535,11 @@ class Guahao(object):
         return self.config.patient_id
 
     def gen_department_url(self):
-        return self.query_hospital_url+"?_time="+str(self.timestamp()) + "&hosCode="+str(self.config.hospital_id)
+        return self.query_hospital_url + "?_time=" + str(self.timestamp()) + "&hosCode=" + str(self.config.hospital_id)
+
     def timestamp(self):
-        return int(round(time.time()*1000))
+        return int(round(time.time() * 1000))
+
     def get_duty_time(self):
         """获取放号时间"""
         addr = self.gen_department_url()
@@ -557,24 +561,27 @@ class Guahao(object):
                 logging.info("当前挂号日期变更为: " + self.config.date)
             # 生成放号时间和程序开始时间
             con_data_str = self.config.date + " " + refresh_time + ":00"
-            self.start_time = datetime.datetime.strptime(con_data_str, '%Y-%m-%d %H:%M:%S') + datetime.timedelta(days= - int(appoint_day))
+            self.start_time = datetime.datetime.strptime(con_data_str, '%Y-%m-%d %H:%M:%S') + datetime.timedelta(
+                days=- int(appoint_day))
             logging.info("放号时间: " + self.start_time.strftime("%Y-%m-%d %H:%M"))
-    #type:LOGIN
-    def get_sms_verify_code(self,type):
+
+    # type:LOGIN
+    def get_sms_verify_code(self, type):
         """获取短信验证码"""
         payload = {
-	    "_time":str(self.timestamp()),
-        "mobile":self.config.mobile_no,
-        "smsKey":type,
+            "_time": str(self.timestamp()),
+            "mobile": self.config.mobile_no,
+            "smsKey": type,
         }
-        response = self.browser.get(self.send_code_url+"?"+'&'.join([ str(key)+'='+str(value) for key,value in payload.items() ]) , "")
+        response = self.browser.get(
+            self.send_code_url + "?" + '&'.join([str(key) + '=' + str(value) for key, value in payload.items()]), "")
         data = json.loads(response.text)
         logging.debug(response.text)
         if data["resCode"] == 0:
             logging.info("获取验证码成功")
-            if self.imessage is not None: # 如果使用 iMessage
+            if self.imessage is not None:  # 如果使用 iMessage
                 code = self.imessage.get_verify_code()
-            elif self.qpython3 is not None: # 如果使用 QPython3
+            elif self.qpython3 is not None:  # 如果使用 QPython3
                 code = self.qpython3.get_verify_code()
             else:
                 code = input("输入短信验证码: ")
@@ -590,14 +597,14 @@ class Guahao(object):
             return None
 
     def lazy(self):
-        cur_time = datetime.datetime.now() + datetime.timedelta(seconds=int(time.timezone + 8*60*60))
+        cur_time = datetime.datetime.now() + datetime.timedelta(seconds=int(time.timezone + 8 * 60 * 60))
         if self.start_time > cur_time:
             seconds = (self.start_time - cur_time).total_seconds()
             logging.info("距离放号时间还有" + str(seconds) + "秒")
             hour = seconds // 3600
             minute = (seconds % 3600) // 60
             second = seconds % 60
-            logging.info("距离放号时间还有"+str(int(hour))+" h " + str(int(minute))+" m "+ str(int(second))+ " s")
+            logging.info("距离放号时间还有" + str(int(hour)) + " h " + str(int(minute)) + " m " + str(int(second)) + " s")
 
             sleep_time = seconds - 60
             if sleep_time > 0:
@@ -607,10 +614,10 @@ class Guahao(object):
                 if sleep_time > 3600:
                     sleep_time -= 60
                     for i in trange(1000):
-                        for j in trange(int(sleep_time/1000), leave=False, unit_scale=True):
+                        for j in trange(int(sleep_time / 1000), leave=False, unit_scale=True):
                             time.sleep(1)
                 else:
-                    for i in tqdm(range(int(sleep_time)-60)):
+                    for i in tqdm(range(int(sleep_time) - 60)):
                         time.sleep(1)
 
                 # 自动重新登录
@@ -619,13 +626,13 @@ class Guahao(object):
     def run(self):
         """主逻辑"""
         self.get_duty_time()
-        self.auth_login()                       # 1. 登录
+        self.auth_login()  # 1. 登录
         self.lazy()
         self.calendar_vec()
-        self.get_patient_id()                   # 2. 获取病人id
+        self.get_patient_id()  # 2. 获取病人id
         doctor = ""
         while True:
-            doctor = self.select_doctor()       # 3. 选择医生
+            doctor = self.select_doctor()  # 3. 选择医生
             if doctor == "NoDuty":
                 # 如果当前时间 > 放号时间 + 30s
                 if self.start_time + datetime.timedelta(seconds=30) < datetime.datetime.now():
@@ -642,14 +649,14 @@ class Guahao(object):
                 logging.info("好像还没放号？重试中")
                 time.sleep(1)
             else:
-                total_fee = self.get_fee(doctor)                                # 获取挂号费,需在获取验证码之前
-                sms_code = self.get_sms_verify_code('ORDER_CODE')               # 获取验证码
-                print('sms_code:',sms_code)
+                total_fee = self.get_fee(doctor)  # 获取挂号费,需在获取验证码之前
+                sms_code = self.get_sms_verify_code('ORDER_CODE')  # 获取验证码
+                print('sms_code:', sms_code)
                 if sms_code is None:
                     time.sleep(1)
-                result = self.get_it(doctor, sms_code, total_fee)              # 4.挂号
+                result = self.get_it(doctor, sms_code, total_fee)  # 4.挂号
                 if result:
-                    break                                           # 挂号成功
+                    break  # 挂号成功
 
 
 if __name__ == "__main__":
