@@ -336,6 +336,7 @@ class Guahao(object):
             'firstDeptCode': first_dept_code,
             'target': duty_date
         }
+        print('输出payload', payload)
         response = self.browser.post(self.duty_url, data=payload)
         logging.debug("response data:" + response.text)
         try:
@@ -369,19 +370,22 @@ class Guahao(object):
         if self.config.assign == 'true':
             for doctor_conf in self.config.doctorName:
                 for doctor in doctors:
-                    if self.get_doctor_name(doctor) == doctor_conf and (doctor['totalCount'] % 2 != 0):
+                    print('数量', len(doctor['period']))
+                    if self.get_doctor_name(doctor) == doctor_conf and len(doctor['period']) > 0:
                         logging.info("选中:" + self.get_doctor_name(doctor))
                         return doctor
             return "NoDuty"
         # 按照配置优先级选择医生
         for doctor_conf in self.config.doctorName:
             for doctor in doctors:
-                if self.get_doctor_name(doctor) == doctor_conf and doctor['totalCount'] % 2 != 0:
+                print('数量', len(doctor['period']))
+                if self.get_doctor_name(doctor) == doctor_conf and len(doctor['period']) > 0:
                     return doctor
 
         # 若没有合适的医生，默认返回最好的医生
         for doctor in doctors:
-            if doctor['totalCount'] % 2 != 0:
+            print('数量', len(doctor['period']))
+            if len(doctor['period']) > 0:
                 logging.info("选中:" + self.get_doctor_name(doctor))
                 return doctor
         return "NoDuty"
@@ -399,7 +403,7 @@ class Guahao(object):
         x.field_names = ["医生姓名", "擅长", "号余量"]
         for doctor in self.dutys:
             x.add_row(
-                [self.get_doctor_name(doctor), doctor['doctorSkill'], "无" if doctor['totalCount'] % 2 == 0 else "有"])
+                [self.get_doctor_name(doctor), doctor['skill'], "无" if len(doctor['period'])  > 0 else "有"])
         print(x.get_string())
         pass
 
@@ -409,8 +413,8 @@ class Guahao(object):
         """
         hospital_id = self.config.hospital_id
         department_id = self.config.department_id
-        doctor_id = str(doctor['doctorId'])
-        duty_source_id = str(doctor['dutySourceId'])
+        doctor_id = str(doctor['uniqProductKey'])
+        duty_source_id = str(doctor['period'][0]['uniqProductKey'])
 
         payload = {
             'hospitalId': hospital_id,
@@ -418,6 +422,7 @@ class Guahao(object):
             'doctorId': doctor_id,
             'dutySourceId': duty_source_id
         }
+        print('输出PayLoad', payload)
         response = self.browser.post(self.appoint_info_url, data=payload)
         logging.debug("response data:" + response.text)
         try:
@@ -649,6 +654,7 @@ class Guahao(object):
                 logging.info("好像还没放号？重试中")
                 time.sleep(1)
             else:
+                print(doctor)
                 total_fee = self.get_fee(doctor)  # 获取挂号费,需在获取验证码之前
                 sms_code = self.get_sms_verify_code('ORDER_CODE')  # 获取验证码
                 print('sms_code:', sms_code)

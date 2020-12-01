@@ -1,17 +1,23 @@
 # username: 您的的用户名(一般是手机号码)
-username: "16777777777"
+username: "13521262613"
 
 password: ""
 # date: 挂号日期,如填写latest自动挂最新一天
-date: "latest"
+date: "2020-12-02"
 
 # hospitalId: 医院id
-hospitalId: "1"
+hospitalId: "239"
 
 # departmentId: 科室id
-departmentId: "200004003"
-firstDeptCode: "1c87253ca8aa8fc966a2443eeaac0fc1"
-secondDeptCode: "200004003"
+departmentId: "239"
+firstDeptCode: "4a61891ede823aaa41b25f97e8474b15"
+secondDeptCode: "200048548"
+#departmentId: "200004003"
+#firstDeptCode: "1c87253ca8aa8fc966a2443eeaac0fc1"
+#secondDeptCode: "200004004"
+#departmentId: "200004003"
+#firstDeptCode: "1c87253ca8aa8fc966a2443eeaac0fc1"
+#secondDeptCode: "200004003"
 
 # 关于如何获取 hospitalId 和 departmentId
 # 1. 打开挂号页面
@@ -24,7 +30,7 @@ dutyCode: "0"
 
 # patientName: 患者姓名
 # 若是自己挂号可为空
-patientName: ""
+patientName: "张龙龙"
 
 # 就诊卡号
 hospitalCardId: ""
@@ -35,7 +41,7 @@ medicareCardId: ""
 # 保险类型
 # 1:医保
 # 10:自费
-reimbursementType: "1"
+reimbursementType: "10"
 
 # doctorName: 医生姓名
 # 不填写的话默认选最好的医生
