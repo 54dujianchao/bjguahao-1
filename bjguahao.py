@@ -485,7 +485,9 @@ class Guahao(object):
             }
         else:
             payload = {
-                "hospitalId": hospital_id,
+                "hosCode": hospital_id,
+                "firstDeptCode": first_dept_code,
+                "secondDeptCode": second_dept_code,
                 "departmentId": department_id,
                 "uniqProductKey": duty_source_id,
                 "doctorId": doctor_id,
@@ -499,20 +501,21 @@ class Guahao(object):
                 "mapDepartmentId": "",
                 "mapDoctorId": "",
                 "planCode": "",
-                "cardNo": medicare_card_id,
+                "cardNo": patient_id,
                 "jytCardId": "",
                 "hospitalCardId": hospital_card_id,
                 "cardType": "IDENTITY_CARD",
                 "mapDutySourceId": "",
                 "orderFrom": "OTHER",
                 "smsCode": sms_code,
-                "mobileNo": self.config.mobile_no,
+                "phone": self.config.mobile_no,
                 "feeColor": "",
                 "dutyImgType": ""
             }
         # save order
         response = self.browser.post(self.confirm_url, data=payload)
         logging.debug("payload:" + json.dumps(payload))
+        print('打印下单数据', json.loads(response.text))
         logging.debug("response data:" + response.text)
 
         try:
@@ -584,13 +587,15 @@ class Guahao(object):
             logging.info("放号时间: " + self.start_time.strftime("%Y-%m-%d %H:%M"))
 
     # type:LOGIN
-    def get_sms_verify_code(self, type):
+    def get_sms_verify_code(self, type, uniqProductKey):
         """获取短信验证码"""
         payload = {
             "_time": str(self.timestamp()),
             "mobile": self.config.mobile_no,
             "smsKey": type,
+            "uniqProductKey": uniqProductKey,
         }
+        print('打印获取挂号费Payload', payload)
         response = self.browser.get(
             self.send_code_url + "?" + '&'.join([str(key) + '=' + str(value) for key, value in payload.items()]), "")
         data = json.loads(response.text)
@@ -667,9 +672,9 @@ class Guahao(object):
                 logging.info("好像还没放号？重试中")
                 time.sleep(1)
             else:
-                print(doctor)
+                print('打印doctor信息', doctor)
                 # total_fee = self.get_fee(doctor)  # 获取挂号费,需在获取验证码之前
-                sms_code = self.get_sms_verify_code('ORDER_CODE')  # 获取验证码
+                sms_code = self.get_sms_verify_code('ORDER_CODE', doctor['uniqProductKey'])  # 获取验证码
                 print('sms_code:', sms_code)
                 if sms_code is None:
                     time.sleep(1)
