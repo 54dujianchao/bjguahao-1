@@ -68,7 +68,7 @@ class Config(object):
                 self.mobile_no = data["username"]
                 self.sms_code = data["code"]
                 self.password = data["password"]
-                self.date = data["date"]
+                self.date = str(data["date"])
                 self.hospital_id = data["hospital_id"]
                 self.department_id = data["department_id"]
                 self.weekDescDict = {
@@ -617,7 +617,13 @@ class Guahao(object):
             elif self.qpython3 is not None:  # 如果使用 QPython3
                 code = self.qpython3.get_verify_code()
             else:
-                code = input("输入短信验证码: ")
+                mysql_single = mysqlSingle()
+                conn, cursor = mysql_single.get_conn()
+                sql = 'select * from guahao where id =' + self.config.id
+                data = mysql_single.execute_sql_one(sql)
+                #查询数据库，获取到quopri_code
+                # code = input("输入短信验证码: ")
+                code = data['order_code']
             return code
         elif data["msg"] == "短信发送太频繁" and data["code"] == 812:
             logging.error(data["msg"])
@@ -631,6 +637,7 @@ class Guahao(object):
 
     def lazy(self):
         cur_time = datetime.datetime.now() + datetime.timedelta(seconds=int(time.timezone + 8 * 60 * 60))
+        self.start_time = datetime.datetime.now() + datetime.timedelta(seconds=int(time.timezone + 8 * 60 * 60))
         if self.start_time > cur_time:
             seconds = (self.start_time - cur_time).total_seconds()
             logging.info("距离放号时间还有" + str(seconds) + "秒")
