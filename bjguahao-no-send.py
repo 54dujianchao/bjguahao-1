@@ -46,7 +46,13 @@ class Config(object):
             with open(config_path, "r", encoding="utf-8") as yaml_file:
                 mysql_single = mysqlSingle()
                 conn, cursor = mysql_single.get_conn()
-                sql = "select * from guahao where `is_show` = '0' order by `id` desc limit 1;"
+                sql = "select * from guahao where `is_show` = '0'"
+                argvs = sys.argv
+                if len(argvs) > 1:
+                    argvId = sys.argv[1]
+                    if argvId :
+                        sql += ' and id = ' + argvId
+                sql += ' order by `id` desc limit 1;'
                 data = mysql_single.execute_sql_one(sql)
                 # data = yaml.load(yaml_file, Loader=yaml.FullLoader)
                 debug_level = data["debug_level"]
