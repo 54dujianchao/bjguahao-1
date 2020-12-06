@@ -1,5 +1,5 @@
 # username: 您的的用户名(一般是手机号码)
-username: "18535525972"
+username: "15678914810"
 
 password: ""
 # date: 挂号日期,如填写latest自动挂最新一天
@@ -30,7 +30,7 @@ dutyCode: "0"
 
 # patientName: 患者姓名
 # 若是自己挂号可为空
-patientName: "张龙龙"
+patientName: ""
 
 # 就诊卡号
 hospitalCardId: ""
